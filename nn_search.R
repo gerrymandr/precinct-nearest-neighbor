@@ -1,7 +1,6 @@
 library(tidyverse)
 library(sf)
 library(nngeo)
-library(patchwork)
 
 # read in shapefiles and voter file
 
@@ -63,11 +62,25 @@ precinct_vector <- create_precinct_vector()
 random_nn <- random_nn %>% # attach names of neighboring precincts
   mutate(precinct_nn = precinct_vector)
 
-
-
 random_nn$precinct_class_nn <- NA
 for (i in 1:nrow(random_nn)){
   random_nn$precinct_class_nn[i] <- names(which.max(table(random_nn$precinct_nn[i])))
 } # assign a precinct as the max of the vector of precincts
 
+# assign a block to a precinct
 
+random_nn_block <- st_join(blocks, random_nn) %>%
+  select(names(random_nn), GEOID10) %>%
+  drop_na(global_id)
+
+block_classification <- random_nn_block %>%
+  group_by(GEOID10) %>%
+  summarise(precinct = tail(names(sort(table(precinct_class_nn))), 1))
+
+precinct_plot <- ggplot(block_classification) + geom_sf(aes(fill = precinct))
+
+precinct_plot
+
+# save the block classification shapefile with
+
+# st_write(block_classification, "block_classification.shp")
