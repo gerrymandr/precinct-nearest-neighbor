@@ -1,6 +1,7 @@
 library(tidyverse)
 library(sf)
 library(nngeo)
+library(randomcoloR)
 
 # read in shapefiles and voter file
 
@@ -67,6 +68,25 @@ for (i in 1:nrow(random_nn)){
   random_nn$precinct_class_nn[i] <- names(which.max(table(random_nn$precinct_nn[i])))
 } # assign a precinct as the max of the vector of precincts
 
+palette <- distinctColorPalette(20)
+
+ggplot(voterfile_sf) +
+  geom_sf(data = blocks, fill = "#EDF1F7", color = "white") +
+  geom_sf(aes(color = PRECINCT_NAME)) +
+  scale_fill_manual(values = palette, na.value="#edf1f7", name = NULL) +
+  theme_minimal() +
+  theme(panel.grid.major = element_line(colour = 'transparent'),
+        legend.position="none",
+        axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        axis.title.y =element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(),
+        title = element_text(size = 18),
+        text = element_text(family = "Corbel", color = "#6c727c")) +
+  labs(title = "Precinct assignments for voterfile addresses in Vinton County, Ohio")
+
 # assign a block to a precinct
 
 random_nn_block <- st_join(blocks, random_nn) %>%
@@ -85,18 +105,27 @@ blocks_dissolve <- block_classification %>%
   group_by(precinct) %>%
   summarise(n_blocks = n())
 
+palette <- distinctColorPalette(20)
+
 ggplot(blocks_dissolve) +
-  geom_sf(aes(fill = precinct), alpha = 0.6, color = "gray65") +
+  geom_sf(aes(fill = precinct), color = "white") +
+  scale_fill_manual(values = palette, na.value="#edf1f7", name = NULL) +
   theme_minimal() +
   theme(panel.grid.major = element_line(colour = 'transparent'),
-        legend.position="none",
+        legend.position=c(-.1, .4),
         axis.title.x=element_blank(),
         axis.text.x=element_blank(),
         axis.ticks.x=element_blank(),
         axis.title.y =element_blank(),
         axis.text.y=element_blank(),
-        axis.ticks.y=element_blank()) +
-  scale_colour_brewer(palette = "Set3")
+        axis.ticks.y=element_blank(),
+        title = element_text(size = 18),
+        text = element_text(family = "Corbel", color = "#6c727c"),
+        legend.direction  = "vertical",
+        legend.background = element_rect(size=0.25, linetype="solid", 
+                                         colour ="#6c727c")) +
+  labs(title = "Precinct assignments for census blocks in Vinton County, Ohio") +
+  guides(color = guide_legend(override.aes = list(size=2), byrow = TRUE, ncol = 3)) 
 
 # save the block classification shapefile with
 
